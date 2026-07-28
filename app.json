@@ -1,0 +1,21 @@
+{
+  "expo": {
+    "name": "CrushRoll",
+    "slug": "crushroll",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "crushroll",
+    "userInterfaceStyle": "automatic",
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.renatohuard.crushroll"
+    },
+    "android": {
+      "package": "com.renatohuard.crushroll",
+      "adaptiveIcon": {
+        "backgroundColor": "#1E2327"
+      }
+    }
+  }
+}
