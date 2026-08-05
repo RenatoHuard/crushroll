@@ -27,6 +27,16 @@ export function useAuth() {
     };
   }, []);
 
+  async function signInWithEmail(email: string, password: string) {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+  }
+
+  async function signUpWithEmail(email: string, password: string) {
+    const { error } = await supabase.auth.signUp({ email, password });
+    if (error) throw error;
+  }
+
   async function signInWithProvider(provider: "google" | "apple") {
     const redirectTo = AuthSession.makeRedirectUri({ scheme: "crushroll" });
 
@@ -66,5 +76,5 @@ export function useAuth() {
     await supabase.auth.signOut();
   }
 
-  return { session, loading, signInWithProvider, signOut };
+  return { session, loading, signInWithEmail, signUpWithEmail, signInWithProvider, signOut };
 }
