@@ -53,7 +53,7 @@ export default function LoginScreen() {
       style={styles.container}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
-      <Text style={styles.title}>CrushRoll</Text>
+      <Text style={styles.title}>CrushDex</Text>
       <Text style={styles.subtitle}>Entre para cadastrar seus crushs</Text>
 
       <TextInput

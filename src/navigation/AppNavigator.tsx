@@ -4,7 +4,9 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { RootStackParamList } from "./types";
 import CrushListScreen from "../screens/CrushListScreen";
 import CrushFormScreen from "../screens/CrushFormScreen";
+import CrushDetailScreen from "../screens/CrushDetailScreen";
 import ProfileScreen from "../screens/ProfileScreen";
+import DateFormScreen from "../screens/DateFormScreen";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -20,7 +22,12 @@ export default function AppNavigator() {
         <Stack.Screen
           name="CrushList"
           component={CrushListScreen}
-          options={{ title: "CrushRoll" }}
+          options={{ title: "CrushDex" }}
+        />
+        <Stack.Screen
+          name="CrushDetail"
+          component={CrushDetailScreen}
+          options={{ title: "CrushDex" }}
         />
         <Stack.Screen
           name="CrushForm"
@@ -31,6 +38,11 @@ export default function AppNavigator() {
           name="Profile"
           component={ProfileScreen}
           options={{ title: "Meu perfil" }}
+        />
+        <Stack.Screen
+          name="DateForm"
+          component={DateFormScreen}
+          options={{ title: "Registrar Date" }}
         />
       </Stack.Navigator>
     </NavigationContainer>

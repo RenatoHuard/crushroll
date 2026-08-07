@@ -1,12 +1,14 @@
 {
   "expo": {
-    "name": "CrushRoll",
+    "name": "CrushDex",
     "slug": "crushroll",
     "version": "1.0.0",
     "orientation": "portrait",
     "scheme": "crushroll",
     "userInterfaceStyle": "automatic",
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.renatohuard.crushroll"
@@ -16,6 +18,12 @@
       "adaptiveIcon": {
         "backgroundColor": "#1E2327"
       }
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "d1071afd-c5e0-4647-ad64-b4cd0aa10f7e"
+      }
+    },
+    "owner": "renatohuard"
   }
 }
