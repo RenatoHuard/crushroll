@@ -255,7 +255,7 @@ export default function DateFormScreen({ navigation, route }: Props) {
       .upload(path, arrayBuffer, { contentType: "image/jpeg", upsert: true });
     if (error) throw error;
     const { data: { publicUrl } } = supabase.storage.from("crush-photos").getPublicUrl(path);
-    return publicUrl;
+    return `${publicUrl}?t=${Date.now()}`;
   }
 
   const filteredCrushes = crushes.filter((c) =>

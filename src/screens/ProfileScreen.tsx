@@ -94,7 +94,7 @@ export default function ProfileScreen() {
     const { data: { publicUrl } } = supabase.storage
       .from("crush-photos")
       .getPublicUrl(path);
-    return publicUrl;
+    return `${publicUrl}?t=${Date.now()}`;
   }
 
   async function handleSave() {

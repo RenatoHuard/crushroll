@@ -174,7 +174,7 @@ export default function CrushFormScreen({ navigation, route }: Props) {
     const { data: { publicUrl } } = supabase.storage
       .from("crush-photos")
       .getPublicUrl(path);
-    return publicUrl;
+    return `${publicUrl}?t=${Date.now()}`;
   }
 
   async function handleSave() {
