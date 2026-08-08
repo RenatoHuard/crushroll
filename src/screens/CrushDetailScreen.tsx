@@ -155,8 +155,10 @@ function DateItem({
               <View style={diStyles.actsGrid}>
                 {activeActs.map((a) => (
                   <View key={a.key} style={diStyles.actCard}>
-                    <Text style={diStyles.actEmoji}>{a.emoji}</Text>
-                    <MiniStars value={d[a.ratingKey]} />
+                    <View style={diStyles.actCardInner}>
+                      <Text style={diStyles.actEmoji}>{a.emoji}</Text>
+                      <MiniStars value={d[a.ratingKey]} />
+                    </View>
                   </View>
                 ))}
               </View>
@@ -228,11 +230,15 @@ const diStyles = StyleSheet.create({
   },
   mapBtnText: { color: "#FFFFFF", fontSize: 13 },
   actsBlock: {},
-  actsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  actsGrid: { flexDirection: "row", flexWrap: "wrap" },
   actCard: {
-    alignItems: "center", backgroundColor: "#262B31",
-    borderRadius: 8, paddingVertical: 8, paddingHorizontal: 10,
-    borderWidth: 1, borderColor: "#3A3F45",
+    width: "33.33%", padding: 4,
+    alignItems: "center", backgroundColor: "transparent",
+  },
+  actCardInner: {
+    width: "100%", alignItems: "center",
+    backgroundColor: "#262B31", borderRadius: 8,
+    paddingVertical: 8, borderWidth: 1, borderColor: "#3A3F45",
   },
   actEmoji: { fontSize: 22 },
   actLabel: { color: "#A0A0A0", fontSize: 10, marginTop: 3, marginBottom: 2 },

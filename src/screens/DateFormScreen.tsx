@@ -627,10 +627,10 @@ const styles = StyleSheet.create({
   },
   photoAddBtnText: { color: "#A0A0A0", fontSize: 32, lineHeight: 36 },
 
-  activitiesRow: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
-  activityWrapper: { alignItems: "center" },
+  activitiesRow: { flexDirection: "row", flexWrap: "wrap" },
+  activityWrapper: { width: "33.33%", padding: 4, alignItems: "center" },
   activityBtn: {
-    alignItems: "center", paddingVertical: 10, paddingHorizontal: 14,
+    width: "100%", alignItems: "center", paddingVertical: 12,
     backgroundColor: "#262B31", borderRadius: 10, borderWidth: 1, borderColor: "#3A3F45",
   },
   activityBtnOn: { backgroundColor: "#3D1A26", borderColor: "#E1306C" },
