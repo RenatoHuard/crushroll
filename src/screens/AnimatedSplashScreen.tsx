@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
-import { View, Image, StyleSheet, Dimensions } from "react-native";
+import { View, Image, Text, StyleSheet, Dimensions } from "react-native";
+import { APP_VERSION } from "../version";
 
 const { width, height } = Dimensions.get("window");
 
@@ -12,7 +13,7 @@ const FRAMES = [
 ];
 
 const FRAME_MS = 160;
-const CYCLES = 3;
+const CYCLES   = 3;
 const TOTAL_FRAMES = FRAMES.length * CYCLES;
 
 interface Props {
@@ -46,11 +47,22 @@ export default function AnimatedSplashScreen({ onFinish }: Props) {
           resizeMode="cover"
         />
       ))}
+      <Text style={styles.version}>v{APP_VERSION}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#1E2327" },
-  frame: { position: "absolute", top: 0, left: 0, width, height },
+  frame:     { position: "absolute", top: 0, left: 0, width, height },
+  version: {
+    position: "absolute",
+    bottom: 32,
+    width: "100%",
+    textAlign: "center",
+    color: "rgba(255,255,255,0.45)",
+    fontSize: 13,
+    fontWeight: "600",
+    letterSpacing: 1,
+  },
 });

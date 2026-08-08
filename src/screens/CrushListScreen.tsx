@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -8,13 +8,16 @@ import {
   ActivityIndicator,
   Image,
   Dimensions,
+  ScrollView,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../lib/useAuth";
 import { Crush } from "../types/database";
 import { RootStackParamList } from "../navigation/types";
+import TimelineTab from "./TimelineTab";
 
 interface Props {
   navigation: NativeStackNavigationProp<RootStackParamList, "CrushList">;
@@ -29,7 +32,27 @@ type SortDir = "asc" | "desc";
 type FilterMode = "todos" | "com_date" | "sem_date";
 type ViewMode = "grid" | "list";
 
-type CrushListItem = Crush & { crush_dates: { id: string }[] };
+type CrushDateScore = {
+  id: string;
+  date_rating: number;
+  had_chat_rating: number;
+  had_kiss_rating: number;
+  had_pirulito_rating: number;
+  had_donut_rating: number;
+  had_fire_rating: number;
+  had_sweat_rating: number;
+};
+
+type CrushListItem = Crush & { crush_dates: CrushDateScore[] };
+
+function totalScore(item: CrushListItem): number {
+  let score = item.interest_rating;
+  for (const d of item.crush_dates ?? []) {
+    score += d.date_rating + d.had_chat_rating + d.had_kiss_rating
+           + d.had_pirulito_rating + d.had_donut_rating + d.had_fire_rating + d.had_sweat_rating;
+  }
+  return score;
+}
 
 function Stars({ value, size = 11 }: { value: number; size?: number }) {
   return (
@@ -52,6 +75,7 @@ function cardBackground(rating: number): string {
 
 export default function CrushListScreen({ navigation }: Props) {
   const { session } = useAuth();
+  const insets = useSafeAreaInsets();
   const [allCrushes, setAllCrushes] = useState<CrushListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [sortMode, setSortMode] = useState<SortMode>("recentes");
@@ -63,8 +87,10 @@ export default function CrushListScreen({ navigation }: Props) {
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [fabOpen, setFabOpen] = useState(false);
   const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [timelineKey, setTimelineKey] = useState(0);
+  const pagerRef = useRef<ScrollView>(null);
 
-  // Update header when profilePhotoUrl changes
   useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
@@ -94,7 +120,10 @@ export default function CrushListScreen({ navigation }: Props) {
   const loadData = useCallback(async () => {
     setLoading(true);
     const [crushRes, profileRes] = await Promise.all([
-      supabase.from("crushes").select("*, crush_dates(id)").order("crush_number", { ascending: true }),
+      supabase
+        .from("crushes")
+        .select("*, crush_dates(id, date_rating, had_chat_rating, had_kiss_rating, had_pirulito_rating, had_donut_rating, had_fire_rating, had_sweat_rating)")
+        .order("crush_number", { ascending: true }),
       session?.user.id
         ? supabase.from("profiles").select("photo_url").eq("id", session.user.id).maybeSingle()
         : Promise.resolve({ data: null, error: null }),
@@ -110,6 +139,7 @@ export default function CrushListScreen({ navigation }: Props) {
   useFocusEffect(
     useCallback(() => {
       loadData();
+      setTimelineKey((k) => k + 1);
     }, [loadData])
   );
 
@@ -126,7 +156,12 @@ export default function CrushListScreen({ navigation }: Props) {
     if (sortMode === "recentes") {
       return ((a.crush_number ?? 0) - (b.crush_number ?? 0)) * dir;
     }
-    return (a.interest_rating - b.interest_rating) * dir;
+    // TOP vs não-TOP: segue a direção da seta
+    // desc (↓): TOP primeiro, não-TOP depois
+    // asc  (↑): não-TOP primeiro, TOP por último
+    if (a.is_top !== b.is_top) return a.is_top ? dir : -dir;
+    // Dentro do mesmo grupo, ordena pela soma total de pontos
+    return (totalScore(a) - totalScore(b)) * dir;
   });
 
   const displayed = sorted.filter((c) => {
@@ -192,111 +227,157 @@ export default function CrushListScreen({ navigation }: Props) {
 
   return (
     <View style={styles.container}>
-      {/* Row 1: Filters (left) + View toggle (right) */}
-      <View style={styles.barRow}>
-        {(["todos", "com_date", "sem_date"] as FilterMode[]).map((f) => {
-          const label = f === "todos" ? "Todos" : f === "com_date" ? "Com Date" : "Sem Date";
-          return (
-            <Pressable
-              key={f}
-              style={[styles.filterChip, filterMode === f && styles.filterChipActive]}
-              onPress={() => setFilterMode(f)}
-            >
-              <Text style={[styles.filterChipText, filterMode === f && styles.filterChipTextActive]}>
-                {label}
-              </Text>
-            </Pressable>
-          );
-        })}
+      {/* Horizontal pager: Page 1 = crush list, Page 2 = timeline */}
+      <ScrollView
+        ref={pagerRef}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        scrollEventThrottle={200}
+        onMomentumScrollEnd={(e) => {
+          const p = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
+          setCurrentPage(p);
+        }}
+        style={{ flex: 1 }}
+      >
+        {/* Page 1: Crush list */}
+        <View style={styles.page}>
+          {/* Row 1: Filters (left) + View toggle (right) */}
+          <View style={styles.barRow}>
+            {(["todos", "com_date", "sem_date"] as FilterMode[]).map((f) => {
+              const label = f === "todos" ? "Todos" : f === "com_date" ? "Com Date" : "Sem Date";
+              return (
+                <Pressable
+                  key={f}
+                  style={[styles.filterChip, filterMode === f && styles.filterChipActive]}
+                  onPress={() => setFilterMode(f)}
+                >
+                  <Text style={[styles.filterChipText, filterMode === f && styles.filterChipTextActive]}>
+                    {label}
+                  </Text>
+                </Pressable>
+              );
+            })}
 
-        <View style={{ flex: 1 }} />
+            <View style={{ flex: 1 }} />
 
-        <View style={styles.viewToggle}>
-          <Pressable
-            style={[styles.viewBtn, viewMode === "grid" && styles.viewBtnActive]}
-            onPress={() => setViewMode("grid")}
-          >
-            <Text style={[styles.viewBtnText, viewMode === "grid" && styles.viewBtnTextActive]}>⊞</Text>
-          </Pressable>
-          <Pressable
-            style={[styles.viewBtn, viewMode === "list" && styles.viewBtnActive]}
-            onPress={() => setViewMode("list")}
-          >
-            <Text style={[styles.viewBtnText, viewMode === "list" && styles.viewBtnTextActive]}>≡</Text>
-          </Pressable>
+            <View style={styles.viewToggle}>
+              <Pressable
+                style={[styles.viewBtn, viewMode === "grid" && styles.viewBtnActive]}
+                onPress={() => setViewMode("grid")}
+              >
+                <Text style={[styles.viewBtnText, viewMode === "grid" && styles.viewBtnTextActive]}>⊞</Text>
+              </Pressable>
+              <Pressable
+                style={[styles.viewBtn, viewMode === "list" && styles.viewBtnActive]}
+                onPress={() => setViewMode("list")}
+              >
+                <Text style={[styles.viewBtnText, viewMode === "list" && styles.viewBtnTextActive]}>≡</Text>
+              </Pressable>
+            </View>
+          </View>
+
+          {/* Row 2: Sort with direction arrows */}
+          <View style={[styles.barRow, { marginBottom: 12 }]}>
+            {(["recentes", "classificacao"] as SortMode[]).map((s) => {
+              const label = s === "recentes" ? "Recentes" : "Classificação";
+              const isActive = sortMode === s;
+              const arrow = sortDirs[s] === "desc" ? " ↓" : " ↑";
+              return (
+                <Pressable
+                  key={s}
+                  style={[styles.sortBtn, isActive && styles.sortBtnActive]}
+                  onPress={() => handleSortPress(s)}
+                >
+                  <Text style={[styles.sortBtnText, isActive && styles.sortBtnTextActive]}>
+                    {label}{arrow}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+
+          {loading ? (
+            <ActivityIndicator color="#FFFFFF" style={{ marginTop: 40 }} />
+          ) : (
+            <FlatList
+              key={viewMode}
+              data={displayed}
+              keyExtractor={(item) => item.id}
+              numColumns={viewMode === "grid" ? 2 : 1}
+              contentContainerStyle={styles.list}
+              columnWrapperStyle={viewMode === "grid" ? styles.columnWrapper : undefined}
+              ListEmptyComponent={<Text style={styles.empty}>Nenhum crush cadastrado ainda.</Text>}
+              renderItem={viewMode === "grid" ? renderGridItem : renderListItem}
+            />
+          )}
         </View>
+
+        {/* Page 2: Timeline */}
+        <View style={{ width: SCREEN_WIDTH, flex: 1 }}>
+          <TimelineTab refreshKey={timelineKey} />
+        </View>
+      </ScrollView>
+
+      {/* Bottom page indicator — sits above system nav bar */}
+      <View style={[styles.dotsBar, { paddingBottom: Math.max(insets.bottom, 10) }]}>
+        {[0, 1].map((i) => (
+          <Pressable
+            key={i}
+            style={[styles.pageDot, currentPage === i && styles.pageDotActive]}
+            onPress={() => {
+              pagerRef.current?.scrollTo({ x: i * SCREEN_WIDTH, animated: true });
+              setCurrentPage(i);
+            }}
+          />
+        ))}
       </View>
 
-      {/* Row 2: Sort with direction arrows */}
-      <View style={[styles.barRow, { marginBottom: 12 }]}>
-        {(["recentes", "classificacao"] as SortMode[]).map((s) => {
-          const label = s === "recentes" ? "Recentes" : "Classificação";
-          const isActive = sortMode === s;
-          const arrow = sortDirs[s] === "desc" ? " ↓" : " ↑";
-          return (
-            <Pressable
-              key={s}
-              style={[styles.sortBtn, isActive && styles.sortBtnActive]}
-              onPress={() => handleSortPress(s)}
-            >
-              <Text style={[styles.sortBtnText, isActive && styles.sortBtnTextActive]}>
-                {label}{arrow}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
-
-      {loading ? (
-        <ActivityIndicator color="#FFFFFF" style={{ marginTop: 40 }} />
-      ) : (
-        <FlatList
-          key={viewMode}
-          data={displayed}
-          keyExtractor={(item) => item.id}
-          numColumns={viewMode === "grid" ? 2 : 1}
-          contentContainerStyle={styles.list}
-          columnWrapperStyle={viewMode === "grid" ? styles.columnWrapper : undefined}
-          ListEmptyComponent={<Text style={styles.empty}>Nenhum crush cadastrado ainda.</Text>}
-          renderItem={viewMode === "grid" ? renderGridItem : renderListItem}
+      {/* FAB dim overlay (only on page 1) */}
+      {fabOpen && currentPage === 0 && (
+        <Pressable
+          style={[StyleSheet.absoluteFillObject, styles.overlay]}
+          onPress={() => setFabOpen(false)}
         />
       )}
 
-      {fabOpen && <Pressable style={styles.overlay} onPress={() => setFabOpen(false)} />}
-
-      <View style={styles.speedDial}>
-        {fabOpen && (
-          <>
-            <View style={styles.speedDialOption}>
-              <Text style={styles.speedDialLabel}>Registrar Date</Text>
-              <Pressable
-                style={[styles.speedDialBtn, { backgroundColor: "#16a34a" }]}
-                onPress={() => { setFabOpen(false); navigation.navigate("DateForm", undefined); }}
-              >
-                <Text style={styles.speedDialBtnText}>📅</Text>
-              </Pressable>
-            </View>
-            <View style={styles.speedDialOption}>
-              <Text style={styles.speedDialLabel}>Novo Crush</Text>
-              <Pressable
-                style={[styles.speedDialBtn, { backgroundColor: "#E1306C" }]}
-                onPress={() => { setFabOpen(false); navigation.navigate("CrushForm", undefined); }}
-              >
-                <Text style={styles.speedDialBtnText}>💘</Text>
-              </Pressable>
-            </View>
-          </>
-        )}
-        <Pressable style={styles.fab} onPress={() => setFabOpen((p) => !p)}>
-          <Text style={styles.fabText}>{fabOpen ? "×" : "+"}</Text>
-        </Pressable>
-      </View>
+      {/* Speed-dial FAB (only visible on page 1) */}
+      {currentPage === 0 && (
+        <View style={[styles.speedDial, { bottom: Math.max(insets.bottom, 10) + 48 }]}>
+          {fabOpen && (
+            <>
+              <View style={styles.speedDialOption}>
+                <Text style={styles.speedDialLabel}>Registrar Date</Text>
+                <Pressable
+                  style={[styles.speedDialBtn, { backgroundColor: "#16a34a" }]}
+                  onPress={() => { setFabOpen(false); navigation.navigate("DateForm", undefined); }}
+                >
+                  <Text style={styles.speedDialBtnText}>📅</Text>
+                </Pressable>
+              </View>
+              <View style={styles.speedDialOption}>
+                <Text style={styles.speedDialLabel}>Novo Crush</Text>
+                <Pressable
+                  style={[styles.speedDialBtn, { backgroundColor: "#E1306C" }]}
+                  onPress={() => { setFabOpen(false); navigation.navigate("CrushForm", undefined); }}
+                >
+                  <Text style={styles.speedDialBtnText}>💘</Text>
+                </Pressable>
+              </View>
+            </>
+          )}
+          <Pressable style={styles.fab} onPress={() => setFabOpen((p) => !p)}>
+            <Text style={styles.fabText}>{fabOpen ? "×" : "+"}</Text>
+          </Pressable>
+        </View>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#1E2327", paddingHorizontal: 16, paddingTop: 12 },
+  container: { flex: 1, backgroundColor: "#1E2327" },
+  page: { width: SCREEN_WIDTH, flex: 1, paddingHorizontal: 16, paddingTop: 12 },
 
   barRow: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 8, flexWrap: "wrap" },
 
@@ -326,7 +407,7 @@ const styles = StyleSheet.create({
   sortBtnText: { color: "#A0A0A0", fontSize: 12, fontWeight: "600" },
   sortBtnTextActive: { color: "#FFFFFF" },
 
-  list: { paddingBottom: 120 },
+  list: { paddingBottom: 130 },
   columnWrapper: { gap: CARD_MARGIN, marginBottom: CARD_MARGIN },
   empty: { color: "#A0A0A0", textAlign: "center", marginTop: 40 },
 
@@ -366,9 +447,27 @@ const styles = StyleSheet.create({
   listName: { color: "#FFF", fontSize: 15, fontWeight: "600" },
   listTags: { flexDirection: "row", gap: 4, marginTop: 4 },
 
+  // Page dots
+  dotsBar: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 8,
+    paddingVertical: 10,
+    backgroundColor: "#1E2327",
+  },
+  pageDot: {
+    width: 8, height: 8, borderRadius: 4,
+    backgroundColor: "#3A3F45",
+  },
+  pageDotActive: {
+    width: 22, height: 8, borderRadius: 4,
+    backgroundColor: "#E1306C",
+  },
+
   // Speed-dial
-  overlay: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.45)" },
-  speedDial: { position: "absolute", right: 20, bottom: 30, alignItems: "flex-end" },
+  overlay: { backgroundColor: "rgba(0,0,0,0.45)" },
+  speedDial: { position: "absolute", right: 20, alignItems: "flex-end" },
   speedDialOption: { flexDirection: "row", alignItems: "center", marginBottom: 12, gap: 10 },
   speedDialLabel: {
     color: "#FFF", fontSize: 13, fontWeight: "600",

@@ -11,6 +11,7 @@ import {
   Image,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../lib/useAuth";
 import { Profile, SocialFields } from "../types/database";
@@ -25,6 +26,7 @@ const EMPTY_SOCIAL: SocialFields = {
 
 export default function ProfileScreen() {
   const { session, signOut, loading: authLoading } = useAuth();
+  const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [name, setName] = useState("");
@@ -142,7 +144,7 @@ export default function ProfileScreen() {
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView style={styles.container} contentContainerStyle={[styles.content, { paddingBottom: 40 + insets.bottom }]}>
       {/* Foto do perfil */}
       <Pressable style={styles.avatarContainer} onPress={pickPhoto}>
         {photoUri ? (
