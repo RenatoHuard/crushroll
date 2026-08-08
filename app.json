@@ -6,6 +6,12 @@
     "orientation": "portrait",
     "scheme": "crushroll",
     "userInterfaceStyle": "automatic",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "cover",
+      "backgroundColor": "#1E2327"
+    },
     "assetBundlePatterns": [
       "**/*"
     ],
@@ -16,6 +22,7 @@
     "android": {
       "package": "com.renatohuard.crushroll",
       "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#1E2327"
       }
     },
