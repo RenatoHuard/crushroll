@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Política de Privacidade — CrushDex</title>
+  <link rel="icon" href="assets/logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background: #1E2327; color: #FFFFFF; min-height: 100vh; }
+    .topbar {
+      background: #161A1D;
+      border-bottom: 1px solid #3A3F45;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .topbar img { width: 32px; height: 32px; border-radius: 8px; }
+    .topbar a { color: #E1306C; font-weight: 700; text-decoration: none; font-size: 15px; }
+    .container { max-width: 760px; margin: 0 auto; padding: 60px 24px 80px; }
+    h1 { font-size: 36px; font-weight: 800; margin-bottom: 8px; }
+    .updated { color: #A0A0A0; font-size: 14px; margin-bottom: 48px; }
+    h2 { font-size: 20px; font-weight: 700; margin: 36px 0 12px; color: #E1306C; }
+    p { color: #C0C5CC; line-height: 1.8; font-size: 15px; margin-bottom: 12px; }
+    ul { color: #C0C5CC; line-height: 1.8; font-size: 15px; padding-left: 20px; margin-bottom: 12px; }
+    ul li { margin-bottom: 6px; }
+    a { color: #E1306C; }
+    .divider { width: 40px; height: 3px; background: linear-gradient(90deg, #E1306C, #9B59B6); border-radius: 2px; margin-bottom: 36px; }
+    footer { background: #161A1D; border-top: 1px solid #3A3F45; padding: 24px; text-align: center; }
+    footer a { color: #A0A0A0; font-size: 14px; text-decoration: none; margin: 0 12px; }
+    footer a:hover { color: #E1306C; }
+    .footer-copy { color: #3A3F45; font-size: 13px; margin-top: 12px; }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <img src="assets/logo.png" alt="CrushDex" />
+    <a href="index.html">← Voltar ao início</a>
+  </div>
+
+  <div class="container">
+    <h1>Política de Privacidade</h1>
+    <p class="updated">Última atualização: agosto de 2026</p>
+    <div class="divider"></div>
+
+    <p>O <strong>CrushDex</strong> é um aplicativo pessoal para organização de informações sobre pessoas de interesse e registros de dates. Esta Política de Privacidade descreve como coletamos, usamos e protegemos suas informações, em conformidade com a <strong>Lei Geral de Proteção de Dados (LGPD — Lei nº 13.709/2018)</strong>.</p>
+
+    <h2>1. Dados coletados</h2>
+    <p>Coletamos apenas os dados que você mesmo fornece ao usar o aplicativo:</p>
+    <ul>
+      <li><strong>Conta:</strong> endereço de e-mail e senha (para autenticação)</li>
+      <li><strong>Perfil:</strong> nome e foto de perfil (opcionais)</li>
+      <li><strong>Crushes:</strong> nome, foto, redes sociais, nível de interesse e notas</li>
+      <li><strong>Dates:</strong> data, local, atividades realizadas, classificação, anotações e fotos</li>
+    </ul>
+    <p>Não coletamos dados de localização em tempo real, contatos do celular, histórico de navegação ou qualquer informação além do que você digita ou envia diretamente no app.</p>
+
+    <h2>2. Como usamos seus dados</h2>
+    <p>Seus dados são usados exclusivamente para:</p>
+    <ul>
+      <li>Exibir suas informações dentro do aplicativo</li>
+      <li>Sincronizar seus dados entre dispositivos vinculados à sua conta</li>
+      <li>Permitir o funcionamento das funcionalidades do app</li>
+    </ul>
+    <p>Não utilizamos seus dados para publicidade, não vendemos nem compartilhamos suas informações com terceiros para fins comerciais.</p>
+
+    <h2>3. Armazenamento e segurança</h2>
+    <p>Seus dados são armazenados de forma segura no <strong>Supabase</strong> (supabase.com), nossa plataforma de banco de dados e armazenamento em nuvem. O Supabase utiliza criptografia em trânsito (HTTPS/TLS) e em repouso.</p>
+    <p>O acesso aos seus dados é protegido por autenticação de e-mail e senha. Cada usuário acessa apenas seus próprios dados, garantido por políticas de segurança em nível de banco de dados (Row Level Security).</p>
+    <p>As fotos enviadas são armazenadas em um bucket privado no Supabase Storage, acessível apenas pela sua conta.</p>
+
+    <h2>4. Seus direitos (LGPD)</h2>
+    <p>Você tem os seguintes direitos sobre seus dados pessoais:</p>
+    <ul>
+      <li><strong>Acesso:</strong> visualizar todos os dados que armazenamos sobre você</li>
+      <li><strong>Correção:</strong> editar qualquer informação diretamente no aplicativo</li>
+      <li><strong>Exclusão:</strong> solicitar a exclusão da sua conta e de todos os seus dados</li>
+      <li><strong>Portabilidade:</strong> solicitar uma cópia dos seus dados</li>
+    </ul>
+    <p>Para exercer qualquer um desses direitos, entre em contato pelo e-mail abaixo.</p>
+
+    <h2>5. Retenção de dados</h2>
+    <p>Seus dados são mantidos enquanto sua conta estiver ativa. Ao solicitar a exclusão da conta, todos os seus dados (crushes, dates, fotos e perfil) serão permanentemente removidos dos nossos servidores em até 30 dias.</p>
+
+    <h2>6. Menores de idade</h2>
+    <p>O CrushDex não é destinado a menores de 16 anos. Não coletamos intencionalmente dados de crianças. Se você acredita que uma criança nos forneceu dados pessoais, entre em contato para que possamos removê-los.</p>
+
+    <h2>7. Alterações nesta política</h2>
+    <p>Podemos atualizar esta Política de Privacidade periodicamente. Quando isso ocorrer, atualizaremos a data no topo desta página. Recomendamos que você a revise periodicamente.</p>
+
+    <h2>8. Contato</h2>
+    <p>Para dúvidas, solicitações de exclusão de dados ou qualquer questão relacionada à sua privacidade, entre em contato:</p>
+    <p><strong>E-mail:</strong> <a href="mailto:renato.jhs@gmail.com">renato.jhs@gmail.com</a></p>
+  </div>
+
+  <footer>
+    <div>
+      <a href="index.html">Início</a>
+      <a href="terms.html">Termos de Uso</a>
+    </div>
+    <p class="footer-copy">© 2026 CrushDex</p>
+  </footer>
+
+</body>
+</html>
