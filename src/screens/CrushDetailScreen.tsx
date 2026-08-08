@@ -302,6 +302,7 @@ export default function CrushDetailScreen({ navigation, route }: Props) {
       .from("crush_dates")
       .select("*")
       .eq("crush_id", crushId)
+      .order("date", { ascending: false, nullsFirst: false })
       .order("created_at", { ascending: false });
 
     if (!error && data) {
