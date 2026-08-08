@@ -28,13 +28,13 @@ const ACTIVITIES: {
   key: keyof ActivityFlags;
   ratingKey: keyof ActivityRatings;
   emoji: string;
-  label: string;
 }[] = [
-  { key: "had_chat", ratingKey: "had_chat_rating", emoji: "💬", label: "Bom papo" },
-  { key: "had_kiss", ratingKey: "had_kiss_rating", emoji: "💋", label: "Beijo" },
-  { key: "had_pirulito", ratingKey: "had_pirulito_rating", emoji: "🍭", label: "Pirulito" },
-  { key: "had_donut", ratingKey: "had_donut_rating", emoji: "🍩", label: "Donut" },
-  { key: "had_fire", ratingKey: "had_fire_rating", emoji: "🔥", label: "Foguinho" },
+  { key: "had_chat", ratingKey: "had_chat_rating", emoji: "💬" },
+  { key: "had_kiss", ratingKey: "had_kiss_rating", emoji: "💋" },
+  { key: "had_pirulito", ratingKey: "had_pirulito_rating", emoji: "🍭" },
+  { key: "had_donut", ratingKey: "had_donut_rating", emoji: "🍩" },
+  { key: "had_fire", ratingKey: "had_fire_rating", emoji: "🔥" },
+  { key: "had_sweat", ratingKey: "had_sweat_rating", emoji: "💦" },
 ];
 
 interface ActivityFlags {
@@ -43,6 +43,7 @@ interface ActivityFlags {
   had_pirulito: boolean;
   had_donut: boolean;
   had_fire: boolean;
+  had_sweat: boolean;
 }
 
 interface ActivityRatings {
@@ -51,6 +52,7 @@ interface ActivityRatings {
   had_pirulito_rating: number;
   had_donut_rating: number;
   had_fire_rating: number;
+  had_sweat_rating: number;
 }
 
 function StarRating({
@@ -131,11 +133,11 @@ export default function DateFormScreen({ navigation, route }: Props) {
   const [location, setLocation] = useState("");
   const [dateRating, setDateRating] = useState(0);
   const [activities, setActivities] = useState<ActivityFlags>({
-    had_chat: false, had_kiss: false, had_pirulito: false, had_donut: false, had_fire: false,
+    had_chat: false, had_kiss: false, had_pirulito: false, had_donut: false, had_fire: false, had_sweat: false,
   });
   const [activityRatings, setActivityRatings] = useState<ActivityRatings>({
     had_chat_rating: 0, had_kiss_rating: 0, had_pirulito_rating: 0,
-    had_donut_rating: 0, had_fire_rating: 0,
+    had_donut_rating: 0, had_fire_rating: 0, had_sweat_rating: 0,
   });
   const [review, setReview] = useState("");
   const [photoUris, setPhotoUris] = useState<string[]>([]);
@@ -200,11 +202,13 @@ export default function DateFormScreen({ navigation, route }: Props) {
     setActivities({
       had_chat: data.had_chat, had_kiss: data.had_kiss,
       had_pirulito: data.had_pirulito, had_donut: data.had_donut, had_fire: data.had_fire,
+      had_sweat: data.had_sweat,
     });
     setActivityRatings({
       had_chat_rating: data.had_chat_rating, had_kiss_rating: data.had_kiss_rating,
       had_pirulito_rating: data.had_pirulito_rating,
       had_donut_rating: data.had_donut_rating, had_fire_rating: data.had_fire_rating,
+      had_sweat_rating: data.had_sweat_rating,
     });
     setReview(data.review ?? "");
     setPhotoUris(data.photos ?? []);
@@ -470,7 +474,7 @@ export default function DateFormScreen({ navigation, route }: Props) {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>O que rolou?</Text>
         <View style={styles.activitiesRow}>
-          {ACTIVITIES.map(({ key, ratingKey, emoji, label }) => {
+          {ACTIVITIES.map(({ key, ratingKey, emoji }) => {
             const active = activities[key];
             return (
               <View key={key} style={styles.activityWrapper}>
@@ -479,7 +483,6 @@ export default function DateFormScreen({ navigation, route }: Props) {
                   onPress={() => setActivities((prev) => ({ ...prev, [key]: !prev[key] }))}
                 >
                   <Text style={styles.activityEmoji}>{emoji}</Text>
-                  <Text style={[styles.activityLabel, active && styles.activityLabelOn]}>{label}</Text>
                 </Pressable>
                 {active && (
                   <View style={styles.activityRatingRow}>

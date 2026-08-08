@@ -43,6 +43,8 @@ export interface CrushDate {
   had_donut_rating: number;
   had_fire: boolean;
   had_fire_rating: number;
+  had_sweat: boolean;
+  had_sweat_rating: number;
   review: string | null;
   date: string | null;
   photos: string[] | null;

@@ -90,16 +90,16 @@ function formatDate(iso: string): string {
 }
 
 const ACTIVITIES: {
-  key: "had_chat" | "had_kiss" | "had_pirulito" | "had_donut" | "had_fire";
-  ratingKey: "had_chat_rating" | "had_kiss_rating" | "had_pirulito_rating" | "had_donut_rating" | "had_fire_rating";
+  key: "had_chat" | "had_kiss" | "had_pirulito" | "had_donut" | "had_fire" | "had_sweat";
+  ratingKey: "had_chat_rating" | "had_kiss_rating" | "had_pirulito_rating" | "had_donut_rating" | "had_fire_rating" | "had_sweat_rating";
   emoji: string;
-  label: string;
 }[] = [
-  { key: "had_chat", ratingKey: "had_chat_rating", emoji: "💬", label: "Bom papo" },
-  { key: "had_kiss", ratingKey: "had_kiss_rating", emoji: "💋", label: "Beijo" },
-  { key: "had_pirulito", ratingKey: "had_pirulito_rating", emoji: "🍭", label: "Pirulito" },
-  { key: "had_donut", ratingKey: "had_donut_rating", emoji: "🍩", label: "Donut" },
-  { key: "had_fire", ratingKey: "had_fire_rating", emoji: "🔥", label: "Foguinho" },
+  { key: "had_chat", ratingKey: "had_chat_rating", emoji: "💬" },
+  { key: "had_kiss", ratingKey: "had_kiss_rating", emoji: "💋" },
+  { key: "had_pirulito", ratingKey: "had_pirulito_rating", emoji: "🍭" },
+  { key: "had_donut", ratingKey: "had_donut_rating", emoji: "🍩" },
+  { key: "had_fire", ratingKey: "had_fire_rating", emoji: "🔥" },
+  { key: "had_sweat", ratingKey: "had_sweat_rating", emoji: "💦" },
 ];
 
 function DateItem({
@@ -156,7 +156,6 @@ function DateItem({
                 {activeActs.map((a) => (
                   <View key={a.key} style={diStyles.actCard}>
                     <Text style={diStyles.actEmoji}>{a.emoji}</Text>
-                    <Text style={diStyles.actLabel}>{a.label}</Text>
                     <MiniStars value={d[a.ratingKey]} />
                   </View>
                 ))}
