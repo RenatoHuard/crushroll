@@ -105,12 +105,6 @@ export default function LoginScreen() {
         <Text style={styles.buttonText}>Entrar com Google</Text>
       </Pressable>
 
-      <Pressable
-        style={[styles.button, styles.apple]}
-        onPress={() => handleProvider("apple")}
-      >
-        <Text style={styles.buttonText}>Entrar com Apple</Text>
-      </Pressable>
     </KeyboardAvoidingView>
   );
 }
