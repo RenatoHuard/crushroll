@@ -1,5 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { View, Image, StyleSheet, Dimensions } from "react-native";
+
+const { width, height } = Dimensions.get("window");
 
 const FRAMES = [
   require("../../assets/splash_1.png"),
@@ -19,34 +21,36 @@ interface Props {
 
 export default function AnimatedSplashScreen({ onFinish }: Props) {
   const [frameIndex, setFrameIndex] = useState(0);
+  const countRef = useRef(0);
 
   useEffect(() => {
-    let count = 0;
     const interval = setInterval(() => {
-      count += 1;
-      if (count >= TOTAL_FRAMES) {
+      countRef.current += 1;
+      if (countRef.current >= TOTAL_FRAMES) {
         clearInterval(interval);
         onFinish();
         return;
       }
-      setFrameIndex(count % FRAMES.length);
+      setFrameIndex(countRef.current % FRAMES.length);
     }, FRAME_MS);
     return () => clearInterval(interval);
   }, []);
 
-  const { width, height } = Dimensions.get("window");
-
   return (
     <View style={styles.container}>
-      <Image
-        source={FRAMES[frameIndex]}
-        style={{ width, height }}
-        resizeMode="cover"
-      />
+      {FRAMES.map((source, i) => (
+        <Image
+          key={i}
+          source={source}
+          style={[styles.frame, { opacity: i === frameIndex ? 1 : 0 }]}
+          resizeMode="cover"
+        />
+      ))}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#1E2327" },
+  frame: { position: "absolute", top: 0, left: 0, width, height },
 });
