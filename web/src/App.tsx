@@ -1,6 +1,8 @@
+import { useState } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { useAuth } from './contexts/AuthContext'
 import Layout from './components/Layout'
+import SplashScreen from './components/SplashScreen'
 import LoginPage        from './pages/LoginPage'
 import AuthCallbackPage from './pages/AuthCallbackPage'
 import CrushListPage    from './pages/CrushListPage'
@@ -25,7 +27,18 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  const [splash, setSplash] = useState(
+    () => !sessionStorage.getItem('splashShown')
+  )
+
+  function handleSplashDone() {
+    sessionStorage.setItem('splashShown', '1')
+    setSplash(false)
+  }
+
   return (
+    <>
+      {splash && <SplashScreen onDone={handleSplashDone} />}
     <Routes>
       <Route path="/login"         element={<LoginPage />} />
       <Route path="/auth/callback" element={<AuthCallbackPage />} />
@@ -96,5 +109,6 @@ export default function App() {
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </>
   )
 }

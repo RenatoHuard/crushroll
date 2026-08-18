@@ -20,9 +20,16 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-crush-bg flex">
       {/* Sidebar — desktop only */}
       <aside className="hidden md:flex flex-col w-56 border-r border-crush-border bg-crush-card fixed left-0 top-0 bottom-0 z-40">
-        <div className="p-5 border-b border-crush-border">
-          <h1 className="text-crush-pink font-bold text-xl tracking-tight">CrushDex</h1>
-          <p className="text-crush-muted text-xs mt-1">Seu pokédex de crushes</p>
+        <div className="p-4 border-b border-crush-border flex items-center gap-3">
+          <img
+            src="icon.png"
+            alt="CrushDex"
+            style={{ width: 44, height: 44, borderRadius: 12, flexShrink: 0 }}
+          />
+          <div>
+            <h1 className="text-white font-black text-lg leading-tight tracking-tight">CrushDex</h1>
+            <p className="text-crush-muted text-[10px] leading-tight mt-0.5">Seu pokédex de crushes</p>
+          </div>
         </div>
 
         <nav className="flex-1 p-3 flex flex-col gap-1 overflow-y-auto">
