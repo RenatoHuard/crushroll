@@ -102,20 +102,21 @@ export default function ProfilePage() {
         {/* Avatar */}
         <div className="flex flex-col items-center mb-8">
           <div className="relative shrink-0">
-            <button type="button" onClick={() => fileRef.current?.click()} className="block">
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              style={{ width: 96, height: 96, borderRadius: '50%', overflow: 'hidden', display: 'block', flexShrink: 0 }}
+            >
               {photoPreview ? (
                 <img
                   src={photoPreview}
                   alt="avatar"
-                  width={96}
-                  height={96}
-                  className="rounded-full object-cover border-2 border-crush-pink"
-                  style={{ width: 96, height: 96, minWidth: 96, maxWidth: 96 }}
+                  style={{ width: 96, height: 96, objectFit: 'cover', display: 'block' }}
                 />
               ) : (
                 <div
-                  className="rounded-full bg-crush-card border-2 border-dashed border-crush-border flex flex-col items-center justify-center gap-1"
-                  style={{ width: 96, height: 96 }}
+                  className="bg-crush-card border-2 border-dashed border-crush-border flex flex-col items-center justify-center gap-1"
+                  style={{ width: 96, height: 96, borderRadius: '50%' }}
                 >
                   <span className="text-3xl">👤</span>
                   <span className="text-crush-muted text-[10px]">Adicionar foto</span>

@@ -71,25 +71,34 @@ function fmtDate(iso: string): string {
   return `${d}/${m}/${y}`
 }
 
+const CHART_H = 120 // px — altura fixa da área de barras
+
 function BarChart({ bars }: { bars: Bar[] }) {
   const maxCount = Math.max(...bars.map(b => b.count), 1)
-  const allZero = bars.every(b => b.count === 0)
+  const allZero  = bars.every(b => b.count === 0)
+
   if (allZero) return (
-    <div className="h-40 flex items-center justify-center">
+    <div style={{ height: CHART_H + 48 }} className="flex items-center justify-center">
       <p className="text-[#5A5F65] text-sm">Sem registros neste período</p>
     </div>
   )
+
   return (
-    <div className="h-44 flex items-end gap-1 px-2 pb-2 pt-4">
+    <div className="flex gap-1 px-3 pb-3 pt-2">
       {bars.map(bar => {
-        const pct = bar.count > 0 ? Math.max((bar.count / maxCount) * 100, 5) : 1
+        const barH = bar.count > 0 ? Math.max((bar.count / maxCount) * CHART_H, 8) : 2
         return (
-          <div key={bar.ym} className="flex-1 flex flex-col items-center justify-end gap-1">
-            {bar.count > 0 && <span className="text-crush-pink text-[10px] font-bold">{bar.count}</span>}
-            <div
-              className="w-full rounded-t-md"
-              style={{ height: `${pct}%`, backgroundColor: bar.count > 0 ? '#E1306C' : '#2A2F35' }}
-            />
+          <div key={bar.ym} className="flex-1 flex flex-col items-center">
+            {/* Coluna de altura fixa — barra cresce de baixo para cima */}
+            <div style={{ height: CHART_H }} className="w-full flex flex-col justify-end items-center">
+              {bar.count > 0 && (
+                <span className="text-crush-pink text-[10px] font-bold mb-1 leading-none">{bar.count}</span>
+              )}
+              <div
+                className="w-full rounded-t"
+                style={{ height: barH, backgroundColor: bar.count > 0 ? '#E1306C' : '#2A2F35' }}
+              />
+            </div>
             <span className="text-crush-muted text-[9px] mt-1">{bar.label}</span>
           </div>
         )
@@ -112,7 +121,17 @@ export default function TimelinePage() {
       .order('date', { ascending: false, nullsFirst: false })
       .order('created_at', { ascending: false })
       .then(({ data }) => {
-        if (data) setEntries(data as unknown as TimelineEntry[])
+        if (data) {
+          const list = data as unknown as TimelineEntry[]
+          setEntries(list)
+          // Abre no último período com dados (não necessariamente o atual)
+          const mostRecent = list.find(e => e.date)?.date
+          if (mostRecent) {
+            const y = parseInt(mostRecent.slice(0, 4))
+            const m = parseInt(mostRecent.slice(5, 7))
+            setPeriod({ year: y, half: m <= 6 ? 1 : 2 })
+          }
+        }
         setLoading(false)
       })
   }, [])

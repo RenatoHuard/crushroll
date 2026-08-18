@@ -165,9 +165,9 @@ export default function CrushDetailPage() {
       </div>
 
       {/* Photo header */}
-      <div className="relative h-56 w-full">
+      <div className="relative h-72 w-full">
         {crush.photo_url ? (
-          <img src={crush.photo_url} className="w-full h-full object-cover" alt={crush.name} />
+          <img src={crush.photo_url} className="w-full h-full object-cover object-top" alt={crush.name} />
         ) : (
           <div className="w-full h-full bg-crush-card flex items-center justify-center text-6xl">💘</div>
         )}
