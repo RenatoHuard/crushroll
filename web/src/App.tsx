@@ -3,6 +3,7 @@ import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { useAuth } from './contexts/AuthContext'
 import Layout from './components/Layout'
 import SplashScreen from './components/SplashScreen'
+import HomePage from './pages/HomePage'
 import LoginPage        from './pages/LoginPage'
 import AuthCallbackPage from './pages/AuthCallbackPage'
 import CrushListPage    from './pages/CrushListPage'
@@ -44,6 +45,14 @@ export default function App() {
       <Route path="/auth/callback" element={<AuthCallbackPage />} />
 
       <Route path="/" element={
+        <AuthGuard>
+          <Layout>
+            <HomePage />
+          </Layout>
+        </AuthGuard>
+      } />
+
+      <Route path="/crushes" element={
         <AuthGuard>
           <Layout>
             <CrushListPage />

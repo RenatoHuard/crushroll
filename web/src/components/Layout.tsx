@@ -2,7 +2,8 @@ import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 
 const NAV_ITEMS = [
-  { to: '/',         label: 'Crushes',  emoji: '💘' },
+  { to: '/',         label: 'Início',   emoji: '🏠' },
+  { to: '/crushes',  label: 'Crushes',  emoji: '💘' },
   { to: '/timeline', label: 'Timeline', emoji: '📅' },
   { to: '/profile',  label: 'Perfil',   emoji: '👤' },
 ]
@@ -13,6 +14,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   function isActive(to: string) {
     if (to === '/') return location.pathname === '/'
+    if (to === '/crushes') return location.pathname === '/crushes' || location.pathname.startsWith('/crushes/')
     return location.pathname.startsWith(to)
   }
 
