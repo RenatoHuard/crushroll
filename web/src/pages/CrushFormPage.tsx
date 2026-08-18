@@ -60,25 +60,42 @@ export default function CrushFormPage() {
     setIgSearching(true)
     setIgError('')
     try {
-      const { data, error } = await supabase.functions.invoke('ig-profile', {
-        body: { username: handle },
+      // Busca direto do browser (IP residencial — não bloqueado pelo Instagram).
+      // corsproxy.io adiciona os headers CORS necessários sem passar pelo servidor.
+      const proxyBase = 'https://corsproxy.io/?url='
+      const igApi = `https://i.instagram.com/api/v1/users/web_profile_info/?username=${handle}`
+      const res = await fetch(proxyBase + encodeURIComponent(igApi), {
+        headers: {
+          'X-IG-App-ID': '936619743392459',
+        },
       })
-      if (error || data?.error) {
-        setIgError(data?.error ?? 'Não foi possível buscar o perfil.')
+
+      if (!res.ok) {
+        setIgError('Perfil não encontrado ou privado.')
         return
       }
-      if (data.name) setName(data.name)
+
+      const json = await res.json()
+      const user = json?.data?.user
+      if (!user) {
+        setIgError('Perfil não encontrado ou privado.')
+        return
+      }
+
+      if (user.full_name) setName(user.full_name)
       setSocial(prev => ({ ...prev, instagram: `@${handle}` }))
-      if (data.photo) {
-        // Converte base64 → File para reutilizar o mesmo fluxo de upload
-        const res  = await fetch(data.photo)
-        const blob = await res.blob()
-        const file = new File([blob], `${handle}.jpg`, { type: blob.type || 'image/jpeg' })
+
+      const photoUrl = user.profile_pic_url_hd ?? user.profile_pic_url
+      if (photoUrl) {
+        // Baixa a foto via proxy para evitar CORS do CDN do Instagram
+        const imgRes  = await fetch(proxyBase + encodeURIComponent(photoUrl))
+        const blob    = await imgRes.blob()
+        const file    = new File([blob], `${handle}.jpg`, { type: 'image/jpeg' })
         setPhotoFile(file)
         setPhotoPreview(URL.createObjectURL(file))
       }
     } catch {
-      setIgError('Erro ao conectar. Tente novamente.')
+      setIgError('Não foi possível buscar. Verifique se o perfil é público.')
     } finally {
       setIgSearching(false)
     }
