@@ -33,6 +33,10 @@ export default function CrushFormPage() {
   const [isTop, setIsTop]                 = useState(false)
   const [review, setReview]               = useState('')
   const [error, setError]                 = useState('')
+  // Instagram import
+  const [igHandle, setIgHandle]           = useState('')
+  const [igSearching, setIgSearching]     = useState(false)
+  const [igError, setIgError]             = useState('')
 
   useEffect(() => {
     if (!id) return
@@ -49,6 +53,36 @@ export default function CrushFormPage() {
       setLoading(false)
     })
   }, [id])
+
+  async function handleIgImport() {
+    const handle = igHandle.replace(/^@/, '').trim()
+    if (!handle) return
+    setIgSearching(true)
+    setIgError('')
+    try {
+      const { data, error } = await supabase.functions.invoke('ig-profile', {
+        body: { username: handle },
+      })
+      if (error || data?.error) {
+        setIgError(data?.error ?? 'Não foi possível buscar o perfil.')
+        return
+      }
+      if (data.name) setName(data.name)
+      setSocial(prev => ({ ...prev, instagram: `@${handle}` }))
+      if (data.photo) {
+        // Converte base64 → File para reutilizar o mesmo fluxo de upload
+        const res  = await fetch(data.photo)
+        const blob = await res.blob()
+        const file = new File([blob], `${handle}.jpg`, { type: blob.type || 'image/jpeg' })
+        setPhotoFile(file)
+        setPhotoPreview(URL.createObjectURL(file))
+      }
+    } catch {
+      setIgError('Erro ao conectar. Tente novamente.')
+    } finally {
+      setIgSearching(false)
+    }
+  }
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -127,6 +161,35 @@ export default function CrushFormPage() {
         {error && (
           <div className="bg-red-900/40 border border-red-500/50 text-red-300 text-sm rounded-lg px-4 py-3 mb-4">{error}</div>
         )}
+
+        {/* Instagram import */}
+        <div className="bg-crush-card border border-crush-border rounded-xl p-4 mb-6">
+          <p className="text-white text-xs font-bold mb-2">
+            <span className="mr-1.5">📸</span>Importar do Instagram
+          </p>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={igHandle}
+              onChange={e => { setIgHandle(e.target.value); setIgError('') }}
+              onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleIgImport())}
+              placeholder="@username"
+              className="flex-1 bg-crush-bg border border-crush-border rounded-lg px-3 py-2 text-white text-sm placeholder:text-crush-muted focus:border-crush-pink transition-colors"
+            />
+            <button
+              type="button"
+              onClick={handleIgImport}
+              disabled={!igHandle.trim() || igSearching}
+              className="px-4 py-2 bg-crush-pink text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-opacity disabled:opacity-40 shrink-0 flex items-center gap-1.5"
+            >
+              {igSearching
+                ? <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin inline-block" />
+                : 'Importar'}
+            </button>
+          </div>
+          {igError && <p className="text-red-400 text-[11px] mt-2">{igError}</p>}
+          <p className="text-crush-muted text-[10px] mt-2">Preenche nome e foto para perfis públicos.</p>
+        </div>
 
         {/* Photo */}
         <div className="flex flex-col items-center mb-6">
