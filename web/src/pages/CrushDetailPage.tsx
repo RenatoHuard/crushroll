@@ -164,24 +164,39 @@ export default function CrushDetailPage() {
         <h2 className="text-white font-bold truncate flex-1">{crush.name}</h2>
       </div>
 
-      {/* Photo header */}
-      <div className="relative h-72 w-full">
-        {crush.photo_url ? (
-          <img src={crush.photo_url} className="w-full h-full object-cover object-top" alt={crush.name} />
-        ) : (
-          <div className="w-full h-full bg-crush-card flex items-center justify-center text-6xl">💘</div>
-        )}
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent px-4 py-4 flex justify-between items-end">
-          <h1 className="text-white text-2xl font-bold">{crush.name}</h1>
+      {/* Photo header — avatar centralizado, tamanho fixo */}
+      <div className="bg-crush-card border-b border-crush-border px-6 py-8 flex flex-col items-center gap-4">
+        <div
+          style={{
+            width: 160, height: 160, borderRadius: '50%',
+            overflow: 'hidden', flexShrink: 0,
+            border: crush.is_top ? '4px solid #FFD700' : '3px solid #3A3F45',
+          }}
+        >
+          {crush.photo_url ? (
+            <img
+              src={crush.photo_url}
+              alt={crush.name}
+              style={{ width: 160, height: 160, objectFit: 'cover', display: 'block' }}
+            />
+          ) : (
+            <div
+              className="bg-crush-border flex items-center justify-center text-6xl"
+              style={{ width: 160, height: 160 }}
+            >
+              💘
+            </div>
+          )}
+        </div>
+
+        <div className="flex flex-col items-center gap-1">
+          <h1 className="text-white text-2xl font-bold text-center">{crush.name}</h1>
           <Stars value={crush.interest_rating} size="lg" />
+          {crush.is_top && (
+            <span className="text-crush-gold font-black text-sm tracking-widest mt-1">⭐ TOP</span>
+          )}
         </div>
       </div>
-
-      {crush.is_top && (
-        <div className="bg-crush-card3 px-4 py-2">
-          <span className="text-crush-gold font-black text-sm tracking-widest">⭐ TOP</span>
-        </div>
-      )}
 
       <div className="p-4 max-w-2xl mx-auto">
         <Collapsible title="Interesse" defaultOpen>
