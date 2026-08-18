@@ -32,6 +32,12 @@ function totalScore(item: CrushListItem): number {
   return s
 }
 
+function avgDateRating(item: CrushListItem): number {
+  const ratings = (item.crush_dates ?? []).map(d => d.date_rating).filter(r => r > 0)
+  if (ratings.length === 0) return item.interest_rating
+  return Math.round(ratings.reduce((a, b) => a + b, 0) / ratings.length)
+}
+
 function cardBg(rating: number): string {
   if (rating <= 2) return '#262B31'
   if (rating <= 4) return '#2D1B22'
@@ -203,7 +209,7 @@ export default function CrushListPage() {
                     )}
                   </div>
                   <p className="text-white text-sm font-bold text-center truncate w-full mb-1">{item.name}</p>
-                  <Stars value={item.interest_rating} size="sm" />
+                  <Stars value={avgDateRating(item)} size="sm" />
                 </Link>
               )
             })}
@@ -243,7 +249,7 @@ export default function CrushListPage() {
                       {hasDate && <span className="bg-crush-green text-white text-[9px] font-bold px-1.5 py-0.5 rounded">Date</span>}
                     </div>
                   </div>
-                  <Stars value={item.interest_rating} size="md" />
+                  <Stars value={avgDateRating(item)} size="md" />
                 </Link>
               )
             })}

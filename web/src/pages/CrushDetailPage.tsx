@@ -117,9 +117,10 @@ function DateCard({ d, num, onEdit }: { d: CrushDate; num: number; onEdit: () =>
 export default function CrushDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const [crush, setCrush] = useState<Crush | null>(null)
-  const [dates, setDates] = useState<CrushDate[]>([])
+  const [crush, setCrush]     = useState<Crush | null>(null)
+  const [dates, setDates]     = useState<CrushDate[]>([])
   const [loading, setLoading] = useState(true)
+  const [crushNav, setCrushNav] = useState<{ id: string; crush_number: number | null }[]>([])
 
   const loadDates = useCallback(async () => {
     if (!id) return
@@ -142,6 +143,17 @@ export default function CrushDetailPage() {
     loadDates()
   }, [id, loadDates])
 
+  // Load crush list for prev/next navigation (once)
+  useEffect(() => {
+    supabase
+      .from('crushes')
+      .select('id, crush_number')
+      .order('crush_number', { ascending: true })
+      .then(({ data }) => {
+        if (data) setCrushNav(data as { id: string; crush_number: number | null }[])
+      })
+  }, [])
+
   if (loading) return (
     <div className="min-h-screen bg-crush-bg flex items-center justify-center">
       <div className="w-8 h-8 border-2 border-crush-pink border-t-transparent rounded-full animate-spin" />
@@ -156,12 +168,40 @@ export default function CrushDetailPage() {
 
   const filledSocials = SOCIALS.filter(f => crush[f.key]?.trim())
 
+  // Average date_rating for header stars (fallback to interest_rating)
+  const validRatings = dates.map(d => d.date_rating).filter(r => r > 0)
+  const headerStars = validRatings.length > 0
+    ? Math.round(validRatings.reduce((a, b) => a + b, 0) / validRatings.length)
+    : crush.interest_rating
+
+  // Prev / next navigation
+  const navIdx  = crushNav.findIndex(c => c.id === id)
+  const prevCrush = navIdx > 0 ? crushNav[navIdx - 1] : null
+  const nextCrush = navIdx >= 0 && navIdx < crushNav.length - 1 ? crushNav[navIdx + 1] : null
+
   return (
     <div className="min-h-screen bg-crush-bg">
-      {/* Header with back button */}
-      <div className="sticky top-0 bg-crush-bg/95 backdrop-blur z-30 border-b border-crush-border px-4 py-3 flex items-center gap-3">
-        <button onClick={() => navigate(-1)} className="text-crush-muted hover:text-white transition-colors text-xl">←</button>
-        <h2 className="text-white font-bold truncate flex-1">{crush.name}</h2>
+      {/* Header with back button + prev/next arrows */}
+      <div className="sticky top-0 bg-crush-bg/95 backdrop-blur z-30 border-b border-crush-border px-4 py-3 flex items-center gap-2">
+        <button onClick={() => navigate(-1)} className="text-crush-muted hover:text-white transition-colors text-xl shrink-0">←</button>
+
+        <button
+          onClick={() => prevCrush && navigate(`/crushes/${prevCrush.id}`)}
+          disabled={!prevCrush}
+          className={`text-lg font-bold shrink-0 transition-colors ${prevCrush ? 'text-crush-pink hover:opacity-70' : 'text-crush-border cursor-not-allowed'}`}
+        >
+          ◀
+        </button>
+
+        <h2 className="text-white font-bold truncate flex-1 text-center">{crush.name}</h2>
+
+        <button
+          onClick={() => nextCrush && navigate(`/crushes/${nextCrush.id}`)}
+          disabled={!nextCrush}
+          className={`text-lg font-bold shrink-0 transition-colors ${nextCrush ? 'text-crush-pink hover:opacity-70' : 'text-crush-border cursor-not-allowed'}`}
+        >
+          ▶
+        </button>
       </div>
 
       {/* Photo header — avatar centralizado, tamanho fixo */}
@@ -191,7 +231,7 @@ export default function CrushDetailPage() {
 
         <div className="flex flex-col items-center gap-1">
           <h1 className="text-white text-2xl font-bold text-center">{crush.name}</h1>
-          <Stars value={crush.interest_rating} size="lg" />
+          <Stars value={headerStars} size="lg" />
           {crush.is_top && (
             <span className="text-crush-gold font-black text-sm tracking-widest mt-1">⭐ TOP</span>
           )}
