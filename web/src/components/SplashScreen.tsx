@@ -1,48 +1,61 @@
-import { useEffect, useState } from 'react'
-
-type Phase = 'enter' | 'visible' | 'leave'
+import { useEffect, useRef } from 'react'
 
 export default function SplashScreen({ onDone }: { onDone: () => void }) {
-  const [phase, setPhase] = useState<Phase>('enter')
+  const wrapRef  = useRef<HTMLDivElement>(null)
+  const innerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    // enter → visible after first paint
-    const t0 = setTimeout(() => setPhase('visible'), 50)
-    // start fade-out at 2s
-    const t1 = setTimeout(() => setPhase('leave'), 2000)
-    // unmount at 2.6s (after 600ms transition)
-    const t2 = setTimeout(() => onDone(), 2600)
-    return () => { clearTimeout(t0); clearTimeout(t1); clearTimeout(t2) }
+    const wrap  = wrapRef.current
+    const inner = innerRef.current
+    if (!wrap || !inner) return
+
+    // Double RAF garante que o browser pintou o estado inicial (opacity 0)
+    // antes de aplicar o estado final — sem isso a transição não dispara
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        wrap.style.opacity  = '1'
+        inner.style.opacity   = '1'
+        inner.style.transform = 'scale(1)'
+      })
+    })
+
+    const t1 = setTimeout(() => {
+      wrap.style.opacity    = '0'
+      inner.style.transform = 'scale(0.96)'
+    }, 1900)
+
+    const t2 = setTimeout(() => onDone(), 2500)
+    return () => { clearTimeout(t1); clearTimeout(t2) }
   }, [onDone])
 
-  const opacity  = phase === 'visible' ? 1 : 0
-  const scale    = phase === 'visible' ? 1 : phase === 'enter' ? 0.88 : 0.96
-  const duration = phase === 'enter' ? '0.45s' : '0.6s'
+  const iconUrl = `${import.meta.env.BASE_URL}icon.png`
 
   return (
     <div
-      className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-crush-bg"
-      style={{ transition: `opacity ${duration} ease`, opacity }}
+      ref={wrapRef}
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-crush-bg"
+      style={{ opacity: 0, transition: 'opacity 0.55s ease' }}
     >
       <div
+        ref={innerRef}
         style={{
-          transition: `transform ${duration} cubic-bezier(.34,1.56,.64,1)`,
-          transform: `scale(${scale})`,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          gap: 0,
+          opacity: 0,
+          transform: 'scale(0.82)',
+          transition: 'opacity 0.45s ease, transform 0.5s cubic-bezier(.34,1.4,.64,1)',
         }}
       >
         <img
-          src="icon.png"
+          src={iconUrl}
           alt="CrushDex"
-          style={{ width: 140, height: 140, borderRadius: 32 }}
           draggable={false}
+          style={{ width: 140, height: 140, borderRadius: 32 }}
         />
         <h1
           className="text-white font-black tracking-tight"
-          style={{ fontSize: 32, marginTop: 28, letterSpacing: '-0.5px' }}
+          style={{ fontSize: 30, marginTop: 26, letterSpacing: '-0.5px' }}
         >
           CrushDex
         </h1>

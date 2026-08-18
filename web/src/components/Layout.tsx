@@ -24,7 +24,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <aside className="hidden md:flex flex-col w-56 border-r border-crush-border bg-crush-card fixed left-0 top-0 bottom-0 z-40">
         <div className="p-4 border-b border-crush-border flex items-center gap-3">
           <img
-            src="icon.png"
+            src={`${import.meta.env.BASE_URL}icon.png`}
             alt="CrushDex"
             style={{ width: 44, height: 44, borderRadius: 12, flexShrink: 0 }}
           />
