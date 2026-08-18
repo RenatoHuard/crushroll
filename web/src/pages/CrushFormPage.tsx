@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
@@ -22,21 +22,24 @@ export default function CrushFormPage() {
   const isEditing = Boolean(id)
   const fileRef = useRef<HTMLInputElement>(null)
 
-  const [loading, setLoading]             = useState(isEditing)
-  const [saving, setSaving]               = useState(false)
-  const [deleting, setDeleting]           = useState(false)
-  const [name, setName]                   = useState('')
-  const [social, setSocial]               = useState<SocialFields>(EMPTY_SOCIAL)
-  const [photoFile, setPhotoFile]         = useState<File | null>(null)
-  const [photoPreview, setPhotoPreview]   = useState<string | null>(null)
+  const [loading, setLoading]               = useState(isEditing)
+  const [saving, setSaving]                 = useState(false)
+  const [deleting, setDeleting]             = useState(false)
+  const [name, setName]                     = useState('')
+  const [social, setSocial]                 = useState<SocialFields>(EMPTY_SOCIAL)
+  const [photoFile, setPhotoFile]           = useState<File | null>(null)
+  const [photoPreview, setPhotoPreview]     = useState<string | null>(null)
   const [interestRating, setInterestRating] = useState(0)
-  const [isTop, setIsTop]                 = useState(false)
-  const [review, setReview]               = useState('')
-  const [error, setError]                 = useState('')
-  // Instagram import
-  const [igHandle, setIgHandle]           = useState('')
-  const [igSearching, setIgSearching]     = useState(false)
-  const [igError, setIgError]             = useState('')
+  const [isTop, setIsTop]                   = useState(false)
+  const [review, setReview]                 = useState('')
+  const [error, setError]                   = useState('')
+
+  // Opção A — paste / drag
+  const [dragging, setDragging]     = useState(false)
+  const [pasteOk, setPasteOk]       = useState(false)
+
+  // Opção B — busca por @username (a implementar)
+  const [igHandle, setIgHandle]     = useState('')
 
   useEffect(() => {
     if (!id) return
@@ -54,58 +57,42 @@ export default function CrushFormPage() {
     })
   }, [id])
 
-  async function handleIgImport() {
-    const handle = igHandle.replace(/^@/, '').trim()
-    if (!handle) return
-    setIgSearching(true)
-    setIgError('')
-    try {
-      // Busca direto do browser (IP residencial — não bloqueado pelo Instagram).
-      // corsproxy.io adiciona os headers CORS necessários sem passar pelo servidor.
-      const proxyBase = 'https://corsproxy.io/?url='
-      const igApi = `https://i.instagram.com/api/v1/users/web_profile_info/?username=${handle}`
-      const res = await fetch(proxyBase + encodeURIComponent(igApi), {
-        headers: {
-          'X-IG-App-ID': '936619743392459',
-        },
-      })
+  // ── Opção A: aplica arquivo de imagem (paste ou drop) ────────────────
+  const applyImage = useCallback((file: File) => {
+    setPhotoFile(file)
+    setPhotoPreview(URL.createObjectURL(file))
+    setPasteOk(true)
+    setTimeout(() => setPasteOk(false), 2500)
+  }, [])
 
-      if (!res.ok) {
-        setIgError('Perfil não encontrado ou privado.')
-        return
+  // Ctrl+V em qualquer lugar da página enquanto o form está aberto
+  useEffect(() => {
+    function onPaste(e: ClipboardEvent) {
+      const items = e.clipboardData?.items
+      if (!items) return
+      for (const item of Array.from(items)) {
+        if (item.type.startsWith('image/')) {
+          const file = item.getAsFile()
+          if (file) { applyImage(file); break }
+        }
       }
-
-      const json = await res.json()
-      const user = json?.data?.user
-      if (!user) {
-        setIgError('Perfil não encontrado ou privado.')
-        return
-      }
-
-      if (user.full_name) setName(user.full_name)
-      setSocial(prev => ({ ...prev, instagram: `@${handle}` }))
-
-      const photoUrl = user.profile_pic_url_hd ?? user.profile_pic_url
-      if (photoUrl) {
-        // Baixa a foto via proxy para evitar CORS do CDN do Instagram
-        const imgRes  = await fetch(proxyBase + encodeURIComponent(photoUrl))
-        const blob    = await imgRes.blob()
-        const file    = new File([blob], `${handle}.jpg`, { type: 'image/jpeg' })
-        setPhotoFile(file)
-        setPhotoPreview(URL.createObjectURL(file))
-      }
-    } catch {
-      setIgError('Não foi possível buscar. Verifique se o perfil é público.')
-    } finally {
-      setIgSearching(false)
     }
+    document.addEventListener('paste', onPaste)
+    return () => document.removeEventListener('paste', onPaste)
+  }, [applyImage])
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault()
+    setDragging(false)
+    const file = Array.from(e.dataTransfer.files).find(f => f.type.startsWith('image/'))
+    if (file) applyImage(file)
   }
 
+  // ── Upload / save ─────────────────────────────────────────────────────
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
-    setPhotoFile(file)
-    setPhotoPreview(URL.createObjectURL(file))
+    applyImage(file)
   }
 
   async function uploadPhoto(file: File, userId: string, crushId: string): Promise<string> {
@@ -123,13 +110,11 @@ export default function CrushFormPage() {
     setSaving(true)
     setError('')
     try {
-      const userId = session.user.id
+      const userId   = session.user.id
       const targetId = id ?? crypto.randomUUID()
       let photo_url: string | null = photoPreview
 
-      if (photoFile) {
-        photo_url = await uploadPhoto(photoFile, userId, targetId)
-      }
+      if (photoFile) photo_url = await uploadPhoto(photoFile, userId, targetId)
 
       const payload = {
         name: name.trim(),
@@ -179,38 +164,89 @@ export default function CrushFormPage() {
           <div className="bg-red-900/40 border border-red-500/50 text-red-300 text-sm rounded-lg px-4 py-3 mb-4">{error}</div>
         )}
 
-        {/* Instagram import */}
-        <div className="bg-crush-card border border-crush-border rounded-xl p-4 mb-6">
-          <p className="text-white text-xs font-bold mb-2">
-            <span className="mr-1.5">📸</span>Importar do Instagram
-          </p>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={igHandle}
-              onChange={e => { setIgHandle(e.target.value); setIgError('') }}
-              onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleIgImport())}
-              placeholder="@username"
-              className="flex-1 bg-crush-bg border border-crush-border rounded-lg px-3 py-2 text-white text-sm placeholder:text-crush-muted focus:border-crush-pink transition-colors"
-            />
+        {/* ── Card de importação ─────────────────────────────────────── */}
+        <div className="bg-crush-card border border-crush-border rounded-2xl p-4 mb-6 flex flex-col gap-4">
+          <p className="text-white text-sm font-bold">Importar perfil</p>
+
+          {/* Opção A — paste / drag */}
+          <div>
+            <p className="text-crush-muted text-[10px] font-bold uppercase tracking-wider mb-2">
+              A · Foto via Ctrl+V ou arraste
+            </p>
+            <div
+              onDragOver={e => { e.preventDefault(); setDragging(true) }}
+              onDragLeave={() => setDragging(false)}
+              onDrop={handleDrop}
+              className={`rounded-xl border-2 border-dashed py-5 flex flex-col items-center gap-1.5 transition-colors cursor-default select-none ${
+                dragging
+                  ? 'border-crush-pink bg-crush-pink/10'
+                  : pasteOk
+                  ? 'border-crush-green bg-crush-green/10'
+                  : 'border-crush-border'
+              }`}
+            >
+              <span className="text-2xl">{pasteOk ? '✅' : dragging ? '📥' : '📋'}</span>
+              <p className="text-white text-xs font-semibold">
+                {pasteOk ? 'Foto colada com sucesso!' : dragging ? 'Solte para usar esta foto' : 'Ctrl+V em qualquer lugar desta página'}
+              </p>
+              <p className="text-crush-muted text-[10px]">
+                {pasteOk ? 'Ajuste abaixo se quiser' : 'No Instagram: segure a foto → Copiar imagem'}
+              </p>
+            </div>
+          </div>
+
+          {/* Opção B — busca automática (em breve) */}
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <p className="text-crush-muted text-[10px] font-bold uppercase tracking-wider">
+                B · Buscar pelo @username
+              </p>
+              <span className="bg-crush-border text-crush-muted text-[9px] font-bold px-1.5 py-0.5 rounded">EM BREVE</span>
+            </div>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={igHandle}
+                onChange={e => {
+                  const val = e.target.value
+                  setIgHandle(val)
+                  // Já pre-preenche o campo @instagram enquanto digita
+                  const clean = val.replace(/^@/, '').trim()
+                  if (clean) setSocial(prev => ({ ...prev, instagram: `@${clean}` }))
+                }}
+                placeholder="@username"
+                className="flex-1 bg-crush-bg border border-crush-border rounded-lg px-3 py-2 text-white text-sm placeholder:text-crush-muted focus:border-crush-pink transition-colors"
+              />
+              <button
+                type="button"
+                disabled
+                className="px-4 py-2 rounded-lg text-sm font-semibold bg-crush-border text-crush-muted cursor-not-allowed opacity-50 shrink-0"
+              >
+                Buscar
+              </button>
+            </div>
+            <p className="text-crush-muted text-[10px] mt-1.5">Preenche nome + foto automaticamente para perfis públicos.</p>
+          </div>
+
+          {/* Opção C — upload manual */}
+          <div>
+            <p className="text-crush-muted text-[10px] font-bold uppercase tracking-wider mb-2">
+              C · Upload manual
+            </p>
             <button
               type="button"
-              onClick={handleIgImport}
-              disabled={!igHandle.trim() || igSearching}
-              className="px-4 py-2 bg-crush-pink text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-opacity disabled:opacity-40 shrink-0 flex items-center gap-1.5"
+              onClick={() => fileRef.current?.click()}
+              className="w-full bg-crush-bg border border-crush-border rounded-xl py-2.5 text-white text-xs font-semibold hover:bg-crush-border transition-colors"
             >
-              {igSearching
-                ? <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin inline-block" />
-                : 'Importar'}
+              📁 Escolher arquivo
             </button>
+            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
           </div>
-          {igError && <p className="text-red-400 text-[11px] mt-2">{igError}</p>}
-          <p className="text-crush-muted text-[10px] mt-2">Preenche nome e foto para perfis públicos.</p>
         </div>
 
-        {/* Photo */}
+        {/* ── Foto preview ──────────────────────────────────────────── */}
         <div className="flex flex-col items-center mb-6">
-          <button type="button" onClick={() => fileRef.current?.click()} className="relative group">
+          <div className="relative">
             {photoPreview ? (
               <img
                 src={photoPreview}
@@ -224,16 +260,18 @@ export default function CrushFormPage() {
                 style={isTop ? { borderColor: '#FFD700', borderStyle: 'solid' } : {}}
               >
                 <span className="text-3xl">📷</span>
-                <span className="text-crush-muted text-[10px]">Adicionar foto</span>
+                <span className="text-crush-muted text-[10px]">Sem foto</span>
               </div>
             )}
-            <div className="absolute inset-0 rounded-full bg-black/0 group-hover:bg-black/20 transition-colors" />
-            {isTop && <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-crush-gold text-black text-[10px] font-black px-2 py-0.5 rounded-lg">TOP</span>}
-          </button>
-          <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+            {isTop && (
+              <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-crush-gold text-black text-[10px] font-black px-2 py-0.5 rounded-lg">
+                TOP
+              </span>
+            )}
+          </div>
         </div>
 
-        {/* Name */}
+        {/* Nome */}
         <div className="mb-4">
           <label className="text-crush-muted text-xs mb-1 block">Nome</label>
           <input
@@ -245,7 +283,7 @@ export default function CrushFormPage() {
           />
         </div>
 
-        {/* Social */}
+        {/* Redes Sociais */}
         <Collapsible title="Redes Sociais">
           <div className="flex flex-col gap-3">
             {SOCIAL_FIELDS.map(f => (
@@ -263,7 +301,7 @@ export default function CrushFormPage() {
           </div>
         </Collapsible>
 
-        {/* Interest */}
+        {/* Interesse */}
         <div className="mb-5">
           <p className="text-crush-muted text-xs font-semibold mb-3">Interesse em sair</p>
           <StarRating
@@ -283,7 +321,7 @@ export default function CrushFormPage() {
           )}
         </div>
 
-        {/* Notes */}
+        {/* Notas */}
         <div className="mb-6">
           <p className="text-crush-muted text-xs font-semibold mb-2">Notas</p>
           <textarea
